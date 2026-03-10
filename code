@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sistema Automatizado de Reciclaje — MISSION IXSTEAM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --muted:#9aa7b2;
+    --accent:#6ee7b7;
+    --accent-2:#7dd3fc;
+    --glass: rgba(255,255,255,0.03);
+    --success:#34d399;
+    --danger:#fb7185;
+    --gold:#fbbf24;
+  }
+  *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  html,body{height:100%;margin:0;background:
+    linear-gradient(180deg, rgba(12,17,23,1) 0%, rgba(8,10,14,1) 100%); color:#e6eef6;}
+  .container{max-width:1100px;margin:36px auto;padding:28px;display:grid;grid-template-columns: 1fr 420px;gap:20px;}
+  header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:14px}
+  header h1{font-size:20px;margin:0;letter-spacing:0.2px}
+  header p{margin:0;color:var(--muted);font-size:13px}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), var(--glass));border-radius:14px;padding:18px;box-shadow: 0 6px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.025)}
+  .left .card + .card{margin-top:18px}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input[type="number"], select, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:14px}
+  .row{display:flex;gap:12px}
+  .row .col{flex:1}
+  button{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#022; padding:10px 12px;border-radius:10px;border:none;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.035);color:var(--muted)}
+  .muted{color:var(--muted);font-size:13px}
+  .small{font-size:13px;color:var(--muted)}
+  .results-title{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .badge{font-weight:700;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);font-size:13px}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+  th,td{padding:8px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.02)}
+  th{color:var(--muted);font-weight:600;font-size:12px}
+  .center{text-align:center}
+  .kpi{display:flex;gap:12px;align-items:center}
+  .kpi .item{background:rgba(255,255,255,0.02);padding:8px;border-radius:10px;min-width:120px}
+  .project-list{max-height:280px;overflow:auto;margin-top:8px}
+  .project{padding:10px;border-radius:10px;margin-bottom:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));border:1px solid rgba(255,255,255,0.02)}
+  .flex{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .foot{grid-column:1/-1;margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+  .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);font-weight:600}
+  .green{color:var(--success)}
+  .red{color:var(--danger)}
+  .gold{color:var(--gold)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .history-list{max-height:180px;overflow:auto;margin-top:8px}
+  .progress-bar{height:8px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0%}
+  .small-muted{font-size:12px;color:var(--muted)}
+  .auto-btn{grid-column:1/-1;display:flex;justify-content:center;margin-bottom:12px}
+  .auto-btn button{font-size:16px;padding:14px 22px;border-radius:14px;letter-spacing:1px;box-shadow:0 8px 30px rgba(7,90,94,0.12)}
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:flex;align-items:center;justify-content:center;z-index:120;opacity:0;pointer-events:none;transition:opacity .18s ease}
+  .overlay.show{opacity:1;pointer-events:auto}
+  .modal{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.025));border-radius:12px;padding:20px;min-width:320px;max-width:420px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 18px 50px rgba(0,0,0,0.6);text-align:center}
+  .modal h3{margin:0 0 8px 0}
+  .modal p{margin:6px 0 0 0;color:var(--muted)}
+  .btn-close{margin-top:14px;padding:8px 12px;border-radius:10px;border:none;background:transparent;color:var(--muted);cursor:pointer}
+  .pulse{animation:pulse .9s infinite}
+  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+  @media (max-width:980px){
+    .container{grid-template-columns:1fr; padding:18px}
+    header{gap:10px}
+  }
+</style>
+</head>
+<body>
+  <!-- BOTÓN DE ANÁLISIS AUTOMÁTICO EN GRANDE -->
+  <div class="auto-btn card" role="region" aria-label="Análisis automático">
+    <button id="auto-analysis-btn" aria-haspopup="dialog" title="Iniciar análisis automático">INICIAR ANÁLISIS AUTOMÁTICO</button>
+  </div>
+
+  <div class="container">
+    <header>
+      <div>
+        <h1>✦ Sistema Automatizado de Reciclaje Asistido — MISSION IXSTEAM</h1>
+        <p class="small"> Inicia un análisis con los sensores, o ingresa los valores manualmente</p>
+      </div>
+      <div class="kpi">
+        <div class="item small-muted">Inventario: <span id="kpi-metal" class="pill gold">0.00 kg</span></div>
+        <div class="item small-muted">Plástico: <span id="kpi-plastic" class="pill green">0.00 kg</span></div>
+      </div>
+    </header>
+
+    <main class="left">
+      <!-- LECTURA/CLASIFICACIÓN -->
+      <section class="card">
+        <div class="results-title">
+          <div>
+            <div class="badge">🔍 Insertar material — Clasificación</div>
+            <div class="small-muted">Introduce lecturas simuladas del sensor para identificar el material</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <div class="row">
+            <div class="col">
+              <label>Magnetismo medido B (µT)</label>
+              <input id="B_measured" type="number" step="any" placeholder="Ej. 120">
+            </div>
+            <div class="col">
+              <label>Magnetismo fondo B_bg (µT)</label>
+              <input id="B_background" type="number" step="any" placeholder="Ej. 20">
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <div class="col">
+              <label>Z_rel (% cambio impedancia)</label>
+              <input id="Z_rel" type="number" step="any" placeholder="Ej. 0.03">
+            </div>
+            <div class="col">
+              <label>Fase φ (°)</label>
+              <input id="phi" type="number" step="any" placeholder="Ej. 12">
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <div class="col">
+              <label>Conductividad σ (S/m)</label>
+              <input id="sigma" type="number" step="any" placeholder="Ej. 1.43e7">
+            </div>
+            <div class="col">
+              <label>Densidad (kg/m³)</label>
+              <input id="densidad" type="number" step="any" placeholder="Ej. 7870">
+            </div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <label>Masa (kg)</label>
+            <input id="masa" type="number" step="any" placeholder="Ej. 0.5">
+          </div>
+
+          <div class="controls">
+            <button id="btn-classify">Clasificar material</button>
+            <button id="btn-clear" class="ghost">Limpiar campos</button>
+            <button id="btn-sample" class="ghost">Cargar muestra (hierro)</button>
+          </div>
+
+          <div id="result-panel" style="margin-top:12px;display:none;">
+            <div class="flex">
+              <div>
+                <div class="small-muted">Material detectado</div>
+                <div style="font-size:18px;font-weight:700" id="detected-name">—</div>
+                <div class="small-muted" id="detected-type">—</div>
+              </div>
+              <div style="width:40%">
+                <div class="small-muted center">Similitud</div>
+                <div class="progress-bar" aria-hidden="true" style="margin-top:6px">
+                  <div id="sim-fill" class="progress-fill"></div>
+                </div>
+                <div class="center small-muted" id="sim-text">0%</div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px">
+              <div class="small-muted">Ranking (top 8)</div>
+              <table id="ranking-table" aria-live="polite">
+                <thead><tr><th>#</th><th>Material</th><th>Tipo</th><th>Similitud</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROYECTOS -->
+      <section class="card" style="margin-top:18px">
+        <div class="badge">🧩 Proyectos disponibles</div>
+        <div class="small-muted" style="margin-top:6px">Selecciona un proyecto para ver requisitos y comprobar si tienes los materiales necesarios.</div>
+
+        <div class="project-list" id="project-list"></div>
+
+        <div style="margin-top:10px" id="project-result" hidden>
+          <div class="card" style="margin-top:8px">
+            <div id="project-report"></div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button id="btn-build">Construir (simular)</button>
+              <button id="btn-cancel" class="ghost">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTORIAL -->
+      <section class="card" style="margin-top:18px">
+        <div class="badge">📜 Historial de inserciones</div>
+        <div class="small-muted" style="margin-top:6px">Registros guardados en este navegador</div>
+        <div class="history-list" id="history-list"></div>
+      </section>
+    </main>
+
+    <aside>
+      <div class="card">
+        <div class="badge">📦 Inventario actual</div>
+        <div class="small-muted" style="margin-top:6px">Resumen rápido</div>
+        <table style="margin-top:10px">
+          <thead><tr><th>Tipo</th><th>Mass (kg)</th></tr></thead>
+          <tbody>
+            <tr><td>Metal</td><td id="inv-metal">0.00</td></tr>
+            <tr><td>Plástico</td><td id="inv-plastic">0.00</td></tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top:12px">
+          <div class="small-muted">Acciones</div>
+          <div class="controls" style="margin-top:8px">
+            <button id="btn-reset">Reset inventario</button>
+            <button id="btn-export" class="ghost">Exportar historial</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="badge">🔧 Matriz de metales (referencia)</div>
+        <div class="small-muted" style="margin-top:8px">Valores simplificados para la clasificación</div>
+        <div style="margin-top:10px;max-height:320px;overflow:auto">
+          <table id="metals-table">
+            <thead><tr><th>Material</th><th>Tipo</th><th>Mag</th><th>Cond (S/m)</th><th>Z_ref</th><th>Dens (kg/m³)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </aside>
+
+    <div class="foot">
+      <div>Una sinfonía de sensores y lógica — elegante, preciso y práctico. — <span class="gold">MISSION IXSTEAM</span></div>
+    </div>
+  </div>
+
+  <!-- MODAL DE ERROR -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document" aria-labelledby="modal-title">
+      <h3 id="modal-title">Error de conexión</h3>
+      <p style="font-weight:700;color:var(--danger);margin-top:8px">No se puede conectar al sistema</p>
+      <p class="small-muted">Comprueba interfaces, cables o reinicia el servicio.</p>
+      <button id="modal-close" class="btn-close">Cerrar</button>
+    </div>
+  </div>
+
+<script>
+/* ===========================
+   Matriz de metales (referencia)
+   =========================== */
+const metales = [
+  ["Hierro","Ferroso",0.10,1.0e7,0.60,7870],
+  ["Níquel","Ferroso",0.09,1.43e7,0.50,8900],
+  ["Cobalto","Ferroso",0.08,1.7e7,0.55,8900],
+  ["Aluminio","No ferroso",0.02,3.5e7,0.30,2700],
+  ["Cobre","No ferroso",0.03,5.96e7,0.40,8960],
+  ["Oro","No ferroso",0.01,4.1e7,0.30,19320],
+  ["Plata","No ferroso",0.01,6.3e7,0.35,10490],
+  ["Platino","No ferroso",0.03,9.43e6,0.40,21450],
+  ["Titanio","No ferroso",0.02,2.38e6,0.30,4500],
+  ["Tungsteno","No ferroso",0.02,1.79e6,0.30,19250],
+  ["Zinc","No ferroso",0.03,1.69e7,0.40,7100],
+  ["Estaño","No ferroso",0.03,9.17e6,0.40,7310],
+  ["Plomo","No ferroso",0.02,4.55e6,0.30,11340],
+  ["Molibdeno","No ferroso",0.02,2.0e7,0.40,10280],
+  ["Vanadio","No ferroso",0.03,3.83e6,0.40,6110],
+  ["Cromo","No ferroso",0.02,7.9e6,0.30,7190],
+  ["Manganeso","No ferroso",0.03,6.3e6,0.40,7400],
+  ["Niobio","No ferroso",0.02,6.7e6,0.30,8850],
+];
+
+/* ===========================
+   Estado persistente (localStorage)
+   =========================== */
+const state = {
+  metal_get: 0,
+  plastic_get: 0,
+  historial: {}
+};
+function loadState(){
+  try{
+    const raw = localStorage.getItem('ixsteam_state_v1');
+    if(raw){ Object.assign(state, JSON.parse(raw)); }
+  }catch(e){ console.warn(e); }
+}
+function saveState(){ localStorage.setItem('ixsteam_state_v1', JSON.stringify(state)); }
+
+/* ===========================
+   UI helpers
+   =========================== */
+function $(id){ return document.getElementById(id); }
+function fmt(n){ return Number(n).toFixed(2); }
+function updateKPIs(){
+  $('inv-metal').textContent = fmt(state.metal_get);
+  $('inv-plastic').textContent = fmt(state.plastic_get);
+  $('kpi-metal').textContent = fmt(state.metal_get) + ' kg';
+  $('kpi-plastic').textContent = fmt(state.plastic_get) + ' kg';
+}
+
+/* populate metals table */
+function renderMetalsTable(){
+  const tbody = document.querySelector('#metals-table tbody');
+  tbody.innerHTML = '';
+  metales.forEach(m => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td><td>${m[3].toExponential(2)}</td><td>${m[4]}</td><td>${m[5]}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ranking table render */
+function renderRanking(resultados){
+  const tbody = document.querySelector('#ranking-table tbody');
+  tbody.innerHTML = '';
+  resultados.slice(0,8).forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2].toFixed(2)}%</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* historial render */
+function renderHistory(){
+  const container = $('history-list');
+  container.innerHTML = '';
+  const entries = Object.entries(state.historial).sort((a,b)=>0);
+  if(entries.length===0){ container.innerHTML = '<div class="small-muted">Aún no hay registros...</div>'; return; }
+  Object.entries(state.historial).forEach(([name,obj])=>{
+    const div = document.createElement('div');
+    div.className = 'project';
+    const meanSim = (obj.similitudes.reduce((s,x)=>s+x,0)/obj.similitudes.length) || 0;
+    div.innerHTML = `<div style="display:flex;justify-content:space-between"><strong>${name}</strong><span class="small-muted">${fmt(obj.masa)} kg</span></div>
+      <div class="small-muted" style="margin-top:6px">Promedio similitud: ${meanSim.toFixed(2)}%</div>`;
+    container.appendChild(div);
+  });
+}
+
+/* ===========================
+   Lógica de similitud
+   =========================== */
+function calcular_similitud(valores, referencia){
+  const [B_delta, sigma, Z_rel, densidad] = valores;
+  const [mag_ref, cond_ref, zref_ref, dens_ref] = referencia;
+  const eps = 1e-9;
+  const diff = Math.sqrt(
+    Math.pow((B_delta - mag_ref) / (Math.abs(mag_ref) + eps), 2) +
+    Math.pow((sigma - cond_ref) / (Math.abs(cond_ref) + eps), 2) +
+    Math.pow((Z_rel - zref_ref) / (Math.abs(zref_ref) + eps), 2) +
+    Math.pow((densidad - dens_ref) / (Math.abs(dens_ref) + eps), 2)
+  );
+  return Math.max(0, 100 - diff * 50);
+}
+
+function identificar_material(B_delta, Z_rel, phi, sigma, densidad, masa){
+  const valores = [B_delta, sigma, Z_rel, densidad];
+  const resultados = [];
+  for(let i=0;i<metales.length;i++){
+    const m = metales[i];
+    const nombre = m[0], tipo = m[1],
+          mag_ref = m[2], cond_ref = m[3], zref_ref = m[4], dens_ref = m[5];
+    const sim = calcular_similitud(valores, [mag_ref, cond_ref, zref_ref, dens_ref]);
+    resultados.push([nombre, tipo, sim]);
+  }
+  resultados.sort((a,b)=>b[2]-a[2]);
+  let [nombre,tipo,sim] = resultados[0];
+
+  if(sim < 40 || sigma < 1e5){
+    if(densidad < 300){
+      nombre = "Textil"; tipo = "No metal";
+    } else if(densidad < 1200){
+      nombre = "Plástico"; tipo = "No metal";
+    } else{
+      nombre = "No identificable"; tipo = "No metal";
+    }
+    sim = 0;
+  }
+  return {nombre,tipo,sim,resultados,masa};
+}
+
+/* ===========================
+   UI actions
+   =========================== */
+document.getElementById('btn-classify').addEventListener('click', ()=>{
+  const B_measured = parseFloat($('B_measured').value) || 0;
+  const B_background = parseFloat($('B_background').value) || 0;
+  const B_delta = Math.abs(B_measured - B_background);
+  const Z_rel = parseFloat($('Z_rel').value) || 0;
+  const phi = parseFloat($('phi').value) || 0;
+  const sigmaRaw = $('sigma').value || '0';
+  const sigma = Number(sigmaRaw);
+  const densidad = parseFloat($('densidad').value) || 0;
+  const masa = parseFloat($('masa').value) || 0;
+
+  const res = identificar_material(B_delta, Z_rel, phi, sigma, densidad, masa);
+  $('detected-name').textContent = res.nombre;
+  $('detected-type').textContent = res.tipo + (res.tipo !== 'No metal' ? ' · metálico' : '');
+  const sim = Math.max(0, Math.min(100, res.sim));
+  $('sim-fill').style.width = sim + '%';
+  $('sim-text').textContent = sim.toFixed(2) + '%';
+  renderRanking(res.resultados);
+  $('result-panel').style.display = 'block';
+
+  if(res.tipo === 'No metal' && res.nombre === 'Plástico'){
+    state.plastic_get += masa;
+  } else if(res.tipo !== 'No metal'){
+    state.metal_get += masa;
+  }
+  if(state.historial[res.nombre]){
+    state.historial[res.nombre].masa += masa;
+    state.historial[res.nombre].similitudes.push(sim);
+  } else {
+    state.historial[res.nombre] = {masa: masa, similitudes: [sim]};
+  }
+  saveState();
+  updateKPIs();
+  renderHistory();
+  console.log(`Material agregado: ${res.nombre} (${fmt(masa)} kg) — Similitud ${sim.toFixed(2)}%`);
+});
+
+document.getElementById('btn-sample').addEventListener('click', ()=>{
+  $('B_measured').value = 130;
+  $('B_background').value = 20;
+  $('Z_rel').value = 0.6;
+  $('phi').value = 12;
+  $('sigma').value = 1.0e7;
+  $('densidad').value = 7870;
+  $('masa').value = 0.5;
+});
+
+document.getElementById('btn-clear').addEventListener('click', ()=>{
+  ['B_measured','B_background','Z_rel','phi','sigma','densidad','masa'].forEach(id=>$(id).value='');
+  $('result-panel').style.display='none';
+});
+
+document.getElementById('btn-reset').addEventListener('click', ()=>{
+  if(confirm('¿Resetear inventario y historial? Esta acción no se puede deshacer.')){
+    state.metal_get=0; state.plastic_get=0; state.historial={};
+    saveState(); updateKPIs(); renderHistory();
+  }
+});
+
+document.getElementById('btn-export').addEventListener('click', ()=>{
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ixsteam_inventario_historial.json';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+/* Proyectos definidos */
+const proyectos = {
+  1: {title:"3D printed housing module", metal_type:"Aluminum", metal:5, plastic:3, instructions:`Diseña, imprime y ensambla paneles. Usar 3D printing con piezas recicladas. Asegurar unión mecánica y acabados.`},
+  2: {title:"Decorative floating structure", metal_type:"Aluminum", metal:0.2, plastic:0.5, instructions:`Diseñar estructura flotante, comprobar flotabilidad y sellos.`},
+  3: {title:"Internal furniture", metal_type:"Aluminum", metal:1, plastic:1.5, instructions:`Diseñar mueble interior; cortar, ensamblar y fijar.`},
+  4: {title:"Repair of damaged components", metal_type:"Aluminum", metal:0.1, plastic:0.05, instructions:`Evaluar daño, cortar y fijar piezas recicladas.`},
+  5: {title:"Decorative lamp", metal_type:"Aluminum", metal:0.05, plastic:0.2, instructions:`Crear base metálica y pantalla plástica; cableado seguro.`},
+  6: {title:"Space jewelry", metal_type:"Gold and silver", metal:0.1, plastic:0.05, instructions:`Moldear metales y combinar con plástico para diseño.`},
+  7: {title:"Recycled sensor / antenna", metal_type:"Copper and aluminum", metal:0.03, plastic:0.02, instructions:`Formar bobinas, montaje en base plástica y pruebas.`},
+  8: {title:"Mini explorer robot", metal_type:"Aluminum and copper", metal:0.5, plastic:0.8, instructions:`Estructura, motores, electrónica y pruebas.`},
+  9: {title:"Dust-Collector Device", metal_type:"Aluminum", metal:0.15, plastic:0.3, instructions:`Diseñar carcasa, filtros y ensamblaje.`},
+  10:{title:"CubeSat", metal_type:"Iron", metal:1.5, plastic:0.7, instructions:`Estructura 1U, integrar electrónica, vibración y pruebas.`}
+};
+
+function renderProjectList(){
+  const box = $('project-list');
+  box.innerHTML = '';
+  Object.keys(proyectos).forEach(k=>{
+    const p = proyectos[k];
+    const el = document.createElement('div');
+    el.className = 'project';
+    el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <strong>${p.title}</strong>
+        <div class="small-muted">${p.metal} kg metal · ${p.plastic} kg plástico · <span class="small-muted">tipo: ${p.metal_type}</span></div>
+      </div>
+      <div>
+        <button class="btn-open" data-id="${k}">Ver</button>
+      </div>
+    </div>`;
+    box.appendChild(el);
+  });
+  document.querySelectorAll('.btn-open').forEach(b=>{
+    b.addEventListener('click', (ev)=>{
+      const id = ev.currentTarget.dataset.id;
+      openProject(id);
+    });
+  });
+}
+
+function openProject(id){
+  const p = proyectos[id];
+  const needMetal = p.metal - state.metal_get;
+  const needPlastic = p.plastic - state.plastic_get;
+  const canBuild = needMetal <= 0 && needPlastic <= 0;
+  const report = `
+    <div style="display:flex;justify-content:space-between"><div><strong>${p.title}</strong></div>
+    <div class="small-muted">${p.metal} kg · ${p.plastic} kg</div></div>
+    <div class="small-muted" style="margin-top:8px">${p.instructions}</div>
+    <div style="margin-top:10px" class="small-muted">Necesitas: Metal ${p.metal} kg (faltan ${needMetal>0?needMetal.toFixed(2):'0.00'}) · Plástico ${p.plastic} kg (faltan ${needPlastic>0?needPlastic.toFixed(2):'0.00'})</div>
+    <div style="margin-top:8px">${canBuild ? '<div class="green">✅ Tienes suficientes materiales.</div>' : '<div class="red">⚠ No hay suficientes materiales.</div>'}</div>
+  `;
+  $('project-report').innerHTML = report;
+  $('project-result').hidden = false;
+
+  $('btn-build').onclick = ()=>{
+    if(!canBuild){
+      alert('No hay suficientes materiales para construir este proyecto.');
+      return;
+    }
+    state.metal_get = Math.max(0, state.metal_get - p.metal);
+    state.plastic_get = Math.max(0, state.plastic_get - p.plastic);
+    saveState(); updateKPIs(); renderHistory();
+    alert(`Construcción simulada: ${p.title} — materiales consumidos.`);
+    $('project-result').hidden = true;
+  };
+  $('btn-cancel').onclick = ()=>{ $('project-result').hidden = true; };
+}
+
+/* ===========================
+   ANÁLISIS AUTOMÁTICO — MODAL
+   =========================== */
+const overlay = $('overlay');
+const autoBtn = $('auto-analysis-btn');
+const modalClose = $('modal-close');
+
+autoBtn.addEventListener('click', ()=>{
+  // pequeña animación visual antes de mostrar (floritura)
+  autoBtn.classList.add('pulse');
+  setTimeout(()=>{
+    autoBtn.classList.remove('pulse');
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+  }, 380);
+});
+
+modalClose.addEventListener('click', ()=>{
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden','true');
+});
+
+/*Cerrar modal con Esc*/
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && overlay.classList.contains('show')){
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+  }
+});
+
+/* ===========================
+   Inicialización
+   =========================== */
+loadState();
+updateKPIs();
+renderMetalsTable();
+renderHistory();
+renderProjectList();
+
+</script>
+</body>
+</html>
